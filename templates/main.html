@@ -1,0 +1,411 @@
+<html>
+<head>
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<title>Показания</title>
+
+
+<script src="http://ajax.googleapis.com/ajax/libs/dojo/1.6/dojo/dojo.xd.js" djConfig="parseOnLoad: true,locale: 'ru'">
+</script>
+<style>
+    @import "http://dojotoolkit.org/documentation/tutorials/1.6/recipes/app_controller/demo/style.css";
+    @import "http://ajax.googleapis.com/ajax/libs/dojo/1.6/dijit/themes/claro/claro.css";
+    @import "http://ajax.googleapis.com/ajax/libs/dojo/1.6/dojox/grid/resources/Grid.css";
+    @import "http://ajax.googleapis.com/ajax/libs/dojo/1.6/dojox/grid/resources/claroGrid.css";
+
+    .dojoxGrid table {
+        margin: 0;
+    }
+
+    html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        font-size: 10px;
+    }
+
+    th .dojoxGridSortNode {
+        font-size: 10px !important;
+        width: auto;
+    }
+
+    h1 {
+        font-size: 10%;
+    }
+
+    body {
+        font: 12px Myriad, Helvetica, Tahoma, Arial, clean, sans-serif;
+        *font-size: 75%;
+    }
+
+    li {
+        padding-bottom: 2px;
+        padding-top: 2px;
+        /*width: 300px;*/
+    }
+    li.subm {
+        margin-left:auto;
+        margin-right:auto;
+    }
+    input {
+        width: 100px;
+    }
+
+    label {
+        width: 120px;
+        float:left;
+        text-align: right;
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+
+    ul {
+        list-style-type: none; /*width: 500px;*/
+        padding-left:0px;
+        margin-left:0px;
+    }
+
+
+</style>
+<script type="text/javascript">
+dojo.require("dijit.layout.BorderContainer");
+dojo.require("dijit.layout.TabContainer");
+dojo.require("dijit.Dialog");
+dojo.require("dijit.layout.ContentPane");
+dojo.require("dojo.data.ItemFileReadStore");
+dojo.require("dojox.grid.DataGrid");
+dojo.require("dojox.charting.widget.Chart2D");
+dojo.require("dojox.charting.widget.Legend");
+dojo.require("dojox.charting.themes.PlotKit.green");
+dojo.require("dojox.charting.themes.Claro");
+dojo.require("dojox.charting.DataSeries");
+dojo.require("dojo.date.locale");
+dojo.require("dijit.MenuBar");
+dojo.require("dijit.PopupMenuBarItem");
+dojo.require("dijit.Menu");
+dojo.require("dijit.MenuItem");
+dojo.require("dijit.PopupMenuItem");
+
+dojo.require('dijit.form.ValidationTextBox');
+dojo.require('dijit.form.DateTextBox');
+dojo.require('dijit.form.NumberTextBox');
+dojo.require('dijit.form.Form');
+dojo.require('dijit.form.Button');
+dojo.require("dijit.layout.StackContainer");
+dojo.require("dijit.form.Button");
+dojo.addOnLoad(function() {
+
+    dojo.query('#open_form').connect('onclick', function() {
+        myDialog = new dijit.Dialog({
+                    title: 'Новые показания',
+                    href:'./form/',
+                    style: 'width: 400px; height:300px;'
+                });
+        myDialog.show();
+        console.log(myDialog)
+        myDialog.onLoadDeferred.then(function(){
+        dojo.query('.form [type="submit"]').connect("onclick", function(e) {
+        dojo.stopEvent(e);
+//            console.log(e);
+            var form = dijit.byNode(e.srcElement.form)
+            if (form.validate()) {
+                var xhr = dojo.xhrPost({
+                            form:form.containerNode,
+                            handleAs:'json'
+                        });
+                xhr.then(function(data) {
+                    if (data.status == 'ok') {
+                        console.log('ok', data)
+                        dijit.byId('stackContainer').forward()
+                    }
+                    else {
+                        console.log('fail', data)
+                        for (var i in data.message) { // Цикл по словарю, берем dijit виджет
+                            var input = dijit.byNode(dojo.byId('widget_id_' + i)) //widget_id_energy-gaz
+                            input.state = 'Error';
+                            input._setStateClass();// Код не мой, я просто разместил объяву
+                            dijit.setWaiState(input, 'invalid', 'true');
+                            input._maskValidSubsetError = true;
+                            dijit.showTooltip(data.message[i], input.domNode, input.tooltipPosition); //Это уже мой код, тут показывается тултип
+                        }
+                    }
+                });
+            }
+            else {
+                return false;
+            }
+
+        });
+            });
+    });
+
+
+})
+
+
+dojo.addOnLoad(function() {
+    var teplo = new dojo.data.ItemFileReadStore({});
+    var energy = new dojo.data.ItemFileReadStore({});
+
+    dojo.xhrGet({
+                url: "delta/",
+                handleAs: "json",
+                load: function(json) {
+                    teplo.data = json.teplo;
+                    energy.data = json.energy;
+                    var t = dojo.byId('today');
+
+                    var struct = [];
+                    var f = json.energy.fields;
+                    var len = f.length;
+
+                    for (i = 0; i < len; i++) {
+                        if (f[i].field == 'id') {
+                            continue;
+                        }
+                        if (f[i].field == 'date_time') {
+                            continue;
+                        }
+                        f[i].style = 'font-size:10%;'
+                        f[i].width = '90px'
+                        struct.push(f[i])
+                    }
+
+                    var energyGrid = new dojox.grid.DataGrid({
+                                query: {
+                                    id: '*'
+                                },
+                                store: energy,
+                                rowSelector: '5px',
+                                structure: struct,
+                                autoWidth: true
+                            }, 'energy');
+                    energyGrid.startup();
+
+                    struct = [];
+                    f = json.teplo.fields;
+                    len = f.length;
+
+                    for (i = 0; i < len; i++) {
+                        if (f[i].field == 'id') {
+                            continue;
+                        }
+                        if (f[i].field == 'date_time') {
+                            continue;
+                        }
+                        f[i].style = 'font-size:10%;'
+                        f[i].width = '88px'
+                        //                    if (f[i].field=='henergy'){f[i].width='60px'}
+                        //                    if (f[i].field=='tobr' || f[i].field=='tpr'){f[i].width='55px'}
+                        //                    if (f[i].field=='rpr' || f[i].field=='robr'){f[i].width='70px'}
+                        struct.push(f[i])
+                    }
+                    var teploGrid = new dojox.grid.DataGrid({
+                                query: {
+                                    id: '*'
+                                },
+                                store: teplo,
+                                rowSelector: '5px',
+                                structure: struct
+                            }, 'teplo');
+                    teploGrid.startup();
+
+                    models = {'energy':energy,'teplo':teplo};
+
+                    var labelfTime = function(o) {
+                        var d = ''
+                        energy.fetch({
+                                    query: {
+                                        'identity': o
+                                    },
+                                    onItem: function(item, request) {
+                                        var str = energy.getValue(item, 'date');
+                                        var dt = new Date(str.replace(/(\d+)-(\d+)-(\d+)/, '$2/$3/$1'));
+                                        d = dojo.date.locale.format(dt, {
+                                                    selector: "date",
+                                                    formatLength: "short",
+                                                    locale: "ru",
+                                                    datePattern: 'd MMM'
+                                                });
+                                    },
+                                    onError: function() {
+                                        d = '';
+                                    }
+                                });
+                        return d;
+                    }
+
+
+                    tab = dijit.byId('tab')
+                    dojo.subscribe("tab-selectChild", function(child) {
+                        if (child.loaded == true) {
+                            return true
+                        }
+                        child.loaded = true
+                        var chart1 = new dojox.charting.Chart2D(child.domNode, {});
+                        chart1.margins.l = 0
+                        chart1.margins.r = 0
+
+                        chart1.addPlot("default", {
+                                    type: "Lines",
+                                    markers: true,
+                                    tension: "S"
+                                });
+                        chart1.setTheme(dojox.charting.themes.Claro);
+                        chart1.addAxis("x", {
+                                    labelFunc: labelfTime,
+                                    minorTickStep: 2
+                                });
+                        chart1.addAxis("y", {
+                                    vertical: true
+                                });
+                        model = models[dojo.attr(child.domNode, 'model')]
+                        chart1.addSeries(child.title, new dojox.charting.DataSeries(
+                                model, {
+                                            query: {
+                                                id: "*"
+                                            }
+                                        }, function(store, item) {
+                                    var o = {
+                                        x: store.getValue(item, 'identity'),
+                                        y: store.getValue(item, dojo.attr(child.domNode, 'field'))
+                                    };
+                                    return o;
+                                }));
+
+                        if (dojo.attr(child.domNode, 'field') == 'elec16') {
+                            chart1.addSeries('Ячейка 4', new dojox.charting.DataSeries(
+                                    model, {
+                                                query: {
+                                                    id: "*"
+                                                }
+                                            }, function(store, item) {
+                                        var o = {
+                                            x: store.getValue(item, 'identity'),
+                                            y: store.getValue(item, 'elec4')
+                                        };
+                                        return o;
+                                    }));
+                        }
+                        if (dojo.attr(child.domNode, 'field') == 'uwater') {
+                            chart1.addSeries('Iwater', new dojox.charting.DataSeries(
+                                    model, {
+                                                query: {
+                                                    id: "*"
+                                                }
+                                            }, function(store, item) {
+                                        var o = {
+                                            x: store.getValue(item, 'identity'),
+                                            y: store.getValue(item, 'iwater')
+                                        };
+                                        return o;
+                                    }));
+                        }
+
+
+                        var magnify = new dojox.charting.action2d.Magnify(chart1, "default");
+                        var tip = new dojox.charting.action2d.Tooltip(chart1, "default");
+                        chart1.render();
+                    });
+//            tab.selectChild(dijit.byId('elec'));
+                    tab.selectChild(dijit.byId('gaz'));
+
+//            var chart1 = new dojox.charting.Chart2D('minigrap', {
+//                //            title:'Дневной расход'
+//            });
+//
+//            chart1.margins.l = 0
+//            chart1.margins.r = 0
+//
+//            chart1.addPlot("default", {
+//                type: "Lines",
+//                markers: true,
+//                tension: "S"
+//            });
+//            chart1.setTheme(dojox.charting.themes.Claro);
+//            chart1.connectToPlot("default", function(evt) {
+//                //    console.info("Chart event on default plot!",evt);
+//                //    console.info("Event type is: ",evt.type);
+//                //    console.info("The element clicked was: ",evt.element);
+//                if (evt.type == 'onclick') {
+//
+//                    //energyGrid.selection.select(7)
+//                    //console.log(evt);
+//                    energy.fetch({
+//                    query: {
+//                        'identity': evt.x
+//                    },
+//                    onItem: function(item, request) {
+//                        var id = energy.getValue(item, 'id');
+//                        energyGrid.selection.select(id);
+//                        console.log(id);
+//                    }
+//                });
+//                }
+//            });
+
+
+//
+//            console.log(chart1);
+//            console.log(energyGrid.getSortProps);
+
+                }
+            });
+});
+</script>
+</head>
+<body class="claro">
+<div id="appLayout" class="demoLayout" data-dojo-type="dijit.layout.BorderContainer">
+    <div dojoType="dijit.MenuBar" id="navMenu" region='top'>
+        <div dojoType="dijit.MenuBarItem" id='open_form'>
+        <span>
+            <b>Добавить показания</b>
+        </span>
+        </div>
+        <div dojoType="dijit.PopupMenuBarItem">
+        <span>
+            Вид
+        </span>
+
+            <div dojoType="dijit.Menu" id="fileMenu">
+                <div dojoType="dijit.MenuItem" onClick="alert('file 1')">
+                    Расход в день
+                </div>
+                <div dojoType="dijit.MenuItem" onClick="alert('file 2')">
+                    Абсолютные значения
+                </div>
+            </div>
+        </div>
+        <div dojoType="dijit.MenuBarItem">
+        <span>
+            Excel
+        </span>
+        </div>
+    </div>
+    <div dojoType="dijit.layout.TabContainer" id='tab' region="top" style="height:330px; padding:0px; margin:0px;">
+        <div dojoType="dijit.layout.ContentPane" title="Газ" id='gaz' field='gaz' model='energy'
+             style='width:100%;height:280px;margin:0px;padding:0px;'>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Электроэнергия" field='elec16' model='energy' selected
+             style='width:100%;height:280px;margin:0px;padding:0px;'>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Вода" field='uwater' model='energy'
+             style='width:100%;height:280px;margin:0px;padding:0px;'>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Отопление" field='henergy' model='teplo'
+             style='width:100%;height:280px;margin:0px;padding:0px;'>
+        </div>
+    </div>
+    <div dojoType="dijit.layout.ContentPane" region="leading" style="width:45%;">
+
+        <div id='energy' style='float:left;width:700px;'></div>
+    </div>
+    <div dojoType="dijit.layout.ContentPane" region="center">
+
+        <div id='teplo' style='float:left;width:700px;'></div>
+    </div>
+</div>
+
+
+</body>
+</html>

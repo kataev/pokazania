@@ -1,0 +1,30 @@
+<div dojoType="dijit.layout.StackContainer" id="stackContainer" style='height:600px; width:400px;' class='form'>
+    <div dojoType="dijit.layout.ContentPane">
+        <form action="./form/" method="POST" dojotype='dijit.form.Form'>
+    <ul>
+        {{ energy_form }}
+        <input type='hidden' name='oper' value="energy">
+        <li class='subm'>
+            <label></label>
+            <button dojoType="dijit.form.Button" type='submit'>Отправить</button>
+        </li>
+    </ul>
+
+</form>
+    </div>
+    <div dojoType="dijit.layout.ContentPane">
+        <form action="./form/" method="POST" dojotype='dijit.form.Form'>
+    <ul>
+        {{ teplo_form }}
+        <input type='hidden' name='oper' value="teplo">
+        <li class='subm'>
+
+            <button dojoType="dijit.form.Button" type='submit'>Отправить</button>
+        </li>
+    </ul>
+</form>
+    </div>
+    <div dojoType="dijit.layout.ContentPane">
+        SAVED ALL
+        </div>
+</div>
