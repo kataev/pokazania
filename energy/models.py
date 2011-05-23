@@ -7,8 +7,8 @@ from django.core.exceptions import ValidationError
 class energy(models.Model):
     date_time=models.DateTimeField(u"Дата и время",auto_now=True)
     date=models.DateField(u"Дата")
-    elec4=models.FloatField(u"Электр 4 ичейка")
-    elec16=models.FloatField(u"Электр 16 ичейка")
+    elec4=models.FloatField(u"Электр 4 ячейка")
+    elec16=models.FloatField(u"Электр 16 ячейка")
     iwater=models.FloatField(u"Пром. Вода")
     uwater=models.FloatField(u"Хоз. Вода")
     gaz=models.PositiveIntegerField(u"Газ нм³")
