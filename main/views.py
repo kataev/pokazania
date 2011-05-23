@@ -26,13 +26,40 @@ def excel(request):
 
 def show_last(request,**kwargs):
     date=datetime.datetime(int(2011),int(5),1,0,0)
-    response = {'teplo':{'identifier':'id','date':'name','items':[]},'energy':{'identifier':'id','label':'name','items':[]}}
+    response = {'teplo':{'identifier':'id','items':[],'fields':[]},'energy':{'identifier':'id','items':[],'fields':[]}}
     q=[teplo,energy]
     for model in q:
-        for a in model.objects.filter(date_time__gte=date):
-            response['teplo']['items'].append(a.get_full_info())
+        query = model.objects.order_by('date').reverse()[:31]
+        l = len(query)
+        fields = model._meta.fields
+        for i in range(l-1):
+            cur = query[i]
+            var = {}
+            for f in fields:
+                if f.name =='id':
+                    var.update({'id':cur.pk})
+                    continue
+                if f.name in ['date','date_time']:
+                    var.update({f.name:str(getattr(cur,f.name))})
+                else:
+                    var.update({f.name:round(getattr(cur,f.name),2)})
+            var['identity']=i+1
+            response[model._meta.app_label]['items'].append(var)
+        for f in fields:
+            if f.name in ['date_time','id']:
+                continue
+            if f.name in ['date','date_time']:
+                response[model._meta.app_label]['fields'].append({
+                    'field': f.name,
+                    'name': f.verbose_name,
+                    'width': 'auto'})
+            else:
+                response[model._meta.app_label]['fields'].append({
+                    'field': f.name,
+                    'name': f.verbose_name,
+                    'width': '200px'})
 
-#    q = {'store':{'identifier':'id','label':'name','items':[]}}
+
     return HttpResponse(json(response),mimetype="application/json;charset=utf-8;")
 
 
@@ -48,7 +75,9 @@ def delta(request,**kwargs):
             cur = query[i]
             next = query[i+1]
             w = 1
-            w = (next.date - cur.date).days
+            w = int((next.date - cur.date).days)
+            if w == 0:
+                w=1
             var = {}
             for f in fields:
                 if f.name =='id':
@@ -107,8 +136,8 @@ def form(request):
         form = f(post,prefix=post['oper'])
 
         if form.is_valid():
-#            inst = form.save()
-            return HttpResponse(json({'status':'ok'}),mimetype="application/json;charset=utf-8")
+            inst = form.save()
+            return HttpResponse(json({'status':'ok','id':inst.pk}),mimetype="application/json;charset=utf-8")
         else:
             del form.errors['__all__']
             return HttpResponse(json({'status':'error','message':form.errors}),mimetype="application/json;charset=utf-8")

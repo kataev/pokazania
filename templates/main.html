@@ -1,10 +1,8 @@
 <html>
 <head>
-<!DOCTYPE html>
-<meta charset="UTF-8">
+{#<!DOCTYPE html>#}
+{#<meta charset="UTF-8">#}
 <title>Показания</title>
-
-
 <script src="http://ajax.googleapis.com/ajax/libs/dojo/1.6/dojo/dojo.xd.js" djConfig="parseOnLoad: true,locale: 'ru'">
 </script>
 <style>
@@ -15,6 +13,10 @@
 
     .dojoxGrid table {
         margin: 0;
+    }
+
+    h3 {
+        text-align: center;
     }
 
     html, body {
@@ -40,20 +42,21 @@
 
     li {
         padding-bottom: 2px;
-        padding-top: 2px;
-        /*width: 300px;*/
+        padding-top: 2px; /*width: 300px;*/
     }
+
     li.subm {
-        margin-left:auto;
-        margin-right:auto;
+        margin-left: auto;
+        margin-right: auto;
     }
+
     input {
         width: 100px;
     }
 
     label {
         width: 120px;
-        float:left;
+        float: left;
         text-align: right;
         margin-right: 5px;
         vertical-align: middle;
@@ -61,8 +64,8 @@
 
     ul {
         list-style-type: none; /*width: 500px;*/
-        padding-left:0px;
-        margin-left:0px;
+        padding-left: 0px;
+        margin-left: 0px;
     }
 
 
@@ -85,7 +88,6 @@ dojo.require("dijit.PopupMenuBarItem");
 dojo.require("dijit.Menu");
 dojo.require("dijit.MenuItem");
 dojo.require("dijit.PopupMenuItem");
-
 dojo.require('dijit.form.ValidationTextBox');
 dojo.require('dijit.form.DateTextBox');
 dojo.require('dijit.form.NumberTextBox');
@@ -93,50 +95,61 @@ dojo.require('dijit.form.Form');
 dojo.require('dijit.form.Button');
 dojo.require("dijit.layout.StackContainer");
 dojo.require("dijit.form.Button");
+dojo.require("dojo.parser");
 dojo.addOnLoad(function() {
 
     dojo.query('#open_form').connect('onclick', function() {
         myDialog = new dijit.Dialog({
-                    title: 'Новые показания',
-                    href:'./form/',
+                    title: 'Добавить новые показания',
+                    content:null,
                     style: 'width: 400px; height:300px;'
                 });
         myDialog.show();
-        console.log(myDialog)
-        myDialog.onLoadDeferred.then(function(){
-        dojo.query('.form [type="submit"]').connect("onclick", function(e) {
-        dojo.stopEvent(e);
-//            console.log(e);
-            var form = dijit.byNode(e.srcElement.form)
-            if (form.validate()) {
-                var xhr = dojo.xhrPost({
-                            form:form.containerNode,
-                            handleAs:'json'
-                        });
-                xhr.then(function(data) {
-                    if (data.status == 'ok') {
-                        console.log('ok', data)
-                        dijit.byId('stackContainer').forward()
-                    }
-                    else {
-                        console.log('fail', data)
-                        for (var i in data.message) { // Цикл по словарю, берем dijit виджет
-                            var input = dijit.byNode(dojo.byId('widget_id_' + i)) //widget_id_energy-gaz
-                            input.state = 'Error';
-                            input._setStateClass();// Код не мой, я просто разместил объяву
-                            dijit.setWaiState(input, 'invalid', 'true');
-                            input._maskValidSubsetError = true;
-                            dijit.showTooltip(data.message[i], input.domNode, input.tooltipPosition); //Это уже мой код, тут показывается тултип
-                        }
-                    }
-                });
-            }
-            else {
-                return false;
-            }
 
+        var content = dojo.xhrGet({
+                    url:'./form'
+                });
+        content.then(function(data) {
+            var a = dojo.create('div', {innerHTML:data}, myDialog.containerNode);
+            dojo.query('*', a).removeAttr('id');
+            dojo.parser.parse(a);
+            dojo.query('.form [type="submit"]').connect("onclick", function(e) {
+                dojo.stopEvent(e);
+                console.log(e);
+                var form = dijit.byNode(e.srcElement.form)
+                if (form.validate()) {
+                    var xhr = dojo.xhrPost({
+                                form:form.containerNode,
+                                handleAs:'json'
+                            },function(error) {
+            e.srcElement.containerNode.innerHTML='Что то пошло не так';
         });
+                    xhr.then(function(data) {
+                        if (data.status == 'ok') {
+                            console.log('ok', data)
+                            dijit.byId('stackContainer').forward()
+                        }
+                        else {
+                            console.log('fail', data)
+                            for (var i in data.message) { // Цикл по словарю, берем dijit виджет
+                                var input = dijit.byNode(dojo.byId('widget_id_' + i)) //widget_id_energy-gaz
+                                input.state = 'Error';
+                                input._setStateClass();// Код не мой, я просто разместил объяву
+                                dijit.setWaiState(input, 'invalid', 'true');
+                                input._maskValidSubsetError = true;
+                                dijit.showTooltip(data.message[i], input.domNode, input.tooltipPosition); //Это уже мой код, тут показывается тултип
+                            }
+                        }
+                    });
+                }
+                else {
+                    return false;
+                }
+
             });
+        }, function(error) {
+            var a = dojo.create('div', {innerHTML:'<h3>Что то пошло не так</h3>'}, myDialog.containerNode);
+        });
     });
 
 
@@ -146,6 +159,21 @@ dojo.addOnLoad(function() {
 dojo.addOnLoad(function() {
     var teplo = new dojo.data.ItemFileReadStore({});
     var energy = new dojo.data.ItemFileReadStore({});
+
+    dojo.query('.view').connect('onclick', function(e) {
+        var url = e.srcElement.parentNode.id;
+
+        var data = dojo.xhrGet({
+                    url: url,
+                    handleAs: "json"
+                });
+        data.then(function(json) {
+            dojo.publish("newdata", [json]);
+//            console.log('energy',energy);
+        });
+
+    });
+
 
     dojo.xhrGet({
                 url: "delta/",
@@ -195,9 +223,6 @@ dojo.addOnLoad(function() {
                         }
                         f[i].style = 'font-size:10%;'
                         f[i].width = '88px'
-                        //                    if (f[i].field=='henergy'){f[i].width='60px'}
-                        //                    if (f[i].field=='tobr' || f[i].field=='tpr'){f[i].width='55px'}
-                        //                    if (f[i].field=='rpr' || f[i].field=='robr'){f[i].width='70px'}
                         struct.push(f[i])
                     }
                     var teploGrid = new dojox.grid.DataGrid({
@@ -307,47 +332,15 @@ dojo.addOnLoad(function() {
                         var tip = new dojox.charting.action2d.Tooltip(chart1, "default");
                         chart1.render();
                     });
-//            tab.selectChild(dijit.byId('elec'));
                     tab.selectChild(dijit.byId('gaz'));
+                    dojo.subscribe("newdata", function(json) {
+//                        console.log(json)
+//                        teplo.data = json.teplo;
+//                        energy.data = json.energy;
+                        teploGrid.setStore(new dojo.data.ItemFileReadStore({data:json.teplo}));
+                        energyGrid.setStore(new dojo.data.ItemFileReadStore({data:json.energy}))
+                    })
 
-//            var chart1 = new dojox.charting.Chart2D('minigrap', {
-//                //            title:'Дневной расход'
-//            });
-//
-//            chart1.margins.l = 0
-//            chart1.margins.r = 0
-//
-//            chart1.addPlot("default", {
-//                type: "Lines",
-//                markers: true,
-//                tension: "S"
-//            });
-//            chart1.setTheme(dojox.charting.themes.Claro);
-//            chart1.connectToPlot("default", function(evt) {
-//                //    console.info("Chart event on default plot!",evt);
-//                //    console.info("Event type is: ",evt.type);
-//                //    console.info("The element clicked was: ",evt.element);
-//                if (evt.type == 'onclick') {
-//
-//                    //energyGrid.selection.select(7)
-//                    //console.log(evt);
-//                    energy.fetch({
-//                    query: {
-//                        'identity': evt.x
-//                    },
-//                    onItem: function(item, request) {
-//                        var id = energy.getValue(item, 'id');
-//                        energyGrid.selection.select(id);
-//                        console.log(id);
-//                    }
-//                });
-//                }
-//            });
-
-
-//
-//            console.log(chart1);
-//            console.log(energyGrid.getSortProps);
 
                 }
             });
@@ -368,17 +361,17 @@ dojo.addOnLoad(function() {
         </span>
 
             <div dojoType="dijit.Menu" id="fileMenu">
-                <div dojoType="dijit.MenuItem" onClick="alert('file 1')">
+                <div dojoType="dijit.MenuItem" id="delta" class='view'>
                     Расход в день
                 </div>
-                <div dojoType="dijit.MenuItem" onClick="alert('file 2')">
+                <div dojoType="dijit.MenuItem" id="last" class='view'>
                     Абсолютные значения
                 </div>
             </div>
         </div>
-        <div dojoType="dijit.MenuBarItem">
+        <div dojoType="dijit.MenuBarItem" onclick="window.location='excel'">
         <span>
-            Excel
+            <a href='excel'>Excel</a>
         </span>
         </div>
     </div>
@@ -398,11 +391,11 @@ dojo.addOnLoad(function() {
     </div>
     <div dojoType="dijit.layout.ContentPane" region="leading" style="width:45%;">
 
-        <div id='energy' style='float:left;width:700px;'></div>
+        <div id='energy' style='float:left;width:auto;'></div>
     </div>
     <div dojoType="dijit.layout.ContentPane" region="center">
 
-        <div id='teplo' style='float:left;width:700px;'></div>
+        <div id='teplo' style='float:left;width:auto;'></div>
     </div>
 </div>
 

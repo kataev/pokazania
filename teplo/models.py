@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 from dojango.forms import ModelForm
+from django.core.exceptions import ValidationError
 
 class teplo(models.Model):
     date_time=models.DateTimeField(u"Дата и время",auto_now=True)
@@ -28,4 +29,3 @@ class teplo(models.Model):
 class teploForm(ModelForm):
     class Meta:
         model=teplo
-#        exclude=('date_time')

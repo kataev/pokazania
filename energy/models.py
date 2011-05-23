@@ -3,8 +3,6 @@ from django.db import models
 from dojango.forms import ModelForm
 from django.core.exceptions import ValidationError
 
-from django.core.exceptions import ValidationError
-
 
 class energy(models.Model):
     date_time=models.DateTimeField(u"Дата и время",auto_now=True)
@@ -43,10 +41,8 @@ class energyForm(ModelForm):
         error={}
         errors=False
         for field in ['iwater','uwater','gaz']:
-#            print field,cleaned_data.get(field),getattr(last,field)
             if int(cleaned_data.get(field)) < getattr(last,field):
-#                print 'fail'
-                error['energy-'+field]=u'Показания должны расти, а не уменьшатся'# +str(getattr(last,field))
+                error['energy-'+field]=u'Показания должны расти, а не уменьшатся ' +str(getattr(last,field))
                 errors=True
         if errors:
             self._errors.update(error)
