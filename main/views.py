@@ -127,7 +127,6 @@ def form(request):
     
     if request.method == 'POST': # Если пост то обрабатываем данные
         post=request.POST.copy() # Копируем массив, ибо request - read only
-#        m=models[post['oper']]
         f=models[post['oper']+'Form']
 
         for field in post:
@@ -137,7 +136,7 @@ def form(request):
 
         if form.is_valid():
             inst = form.save()
-            return HttpResponse(json({'status':'ok','id':inst.pk}),mimetype="application/json;charset=utf-8")
+            return HttpResponse(json({'status':'ok'}),mimetype="application/json;charset=utf-8")
         else:
             del form.errors['__all__']
             return HttpResponse(json({'status':'error','message':form.errors}),mimetype="application/json;charset=utf-8")

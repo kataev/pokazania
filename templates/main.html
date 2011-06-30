@@ -3,13 +3,14 @@
 {#<!DOCTYPE html>#}
 {#<meta charset="UTF-8">#}
 <title>Показания</title>
-<script src="http://ajax.googleapis.com/ajax/libs/dojo/1.6/dojo/dojo.xd.js" djConfig="parseOnLoad: true,locale: 'ru'">
+<script src="../dojo/dojo.js" djConfig="parseOnLoad: true,locale: 'ru'">
+    
 </script>
 <style>
-    @import "http://dojotoolkit.org/documentation/tutorials/1.6/recipes/app_controller/demo/style.css";
-    @import "http://ajax.googleapis.com/ajax/libs/dojo/1.6/dijit/themes/claro/claro.css";
-    @import "http://ajax.googleapis.com/ajax/libs/dojo/1.6/dojox/grid/resources/Grid.css";
-    @import "http://ajax.googleapis.com/ajax/libs/dojo/1.6/dojox/grid/resources/claroGrid.css";
+    /*@import "http://dojotoolkit.org/documentation/tutorials/1.6/recipes/app_controller/demo/style.css";*/
+    @import url(/dijit/themes/claro/claro.css);
+    @import url(/dojox/grid/resources/Grid.css);
+    @import url(/dojox/grid/resources/claroGrid.css);
 
     .dojoxGrid table {
         margin: 0;
@@ -19,11 +20,15 @@
         text-align: center;
     }
 
-    html, body {
+    .dijitBorderContainer,html, body {
         width: 100%;
         height: 100%;
         margin: 0;
-        font-size: 10px;
+        /*font-size: 10px;*/
+        font: 12px Myriad, Helvetica, Tahoma, Arial, clean, sans-serif;
+        *font-size: 75%;
+        /*overflow: hidden;*/
+        /*padding: 0;*/
     }
 
     th .dojoxGridSortNode {
@@ -33,11 +38,6 @@
 
     h1 {
         font-size: 10%;
-    }
-
-    body {
-        font: 12px Myriad, Helvetica, Tahoma, Arial, clean, sans-serif;
-        *font-size: 75%;
     }
 
     li {
@@ -113,26 +113,36 @@ dojo.addOnLoad(function() {
             var a = dojo.create('div', {innerHTML:data}, myDialog.containerNode);
             dojo.query('*', a).removeAttr('id');
             dojo.parser.parse(a);
+
             dojo.query('.form [type="submit"]').connect("onclick", function(e) {
                 dojo.stopEvent(e);
-                console.log(e);
-                var form = dijit.byNode(e.srcElement.form)
+                console.log('clicked',e);
+                var form = dijit.byNode(e.srcElement.form);
+                var submit = dijit.getEnclosingWidget(e.srcElement);
+
+                console.log('submit',submit)
                 if (form.validate()) {
+                    submit.set('disabled',true);
                     var xhr = dojo.xhrPost({
                                 form:form.containerNode,
                                 handleAs:'json'
-                            },function(error) {
-            e.srcElement.containerNode.innerHTML='Что то пошло не так';
-        });
+                            });
                     xhr.then(function(data) {
                         if (data.status == 'ok') {
-                            console.log('ok', data)
-                            dijit.byId('stackContainer').forward()
+                            submit.set('disabled',false);
+                            var s= dijit.byNode(dojo.query('.dijitStackContainer',a)[0]);
+                            console.log(s,s.forward(),s.forward());
+                            console.log('ok', data);
+
+
+
                         }
                         else {
+                            submit.set('disabled',false);
                             console.log('fail', data)
                             for (var i in data.message) { // Цикл по словарю, берем dijit виджет
-                                var input = dijit.byNode(dojo.byId('widget_id_' + i)) //widget_id_energy-gaz
+                                var input = dijit.getEnclosingWidget(dojo.query('[name=' + i + ']', form.containerNode)[0])
+                                console.log(i,a,input);
                                 input.state = 'Error';
                                 input._setStateClass();// Код не мой, я просто разместил объяву
                                 dijit.setWaiState(input, 'invalid', 'true');
@@ -140,6 +150,8 @@ dojo.addOnLoad(function() {
                                 dijit.showTooltip(data.message[i], input.domNode, input.tooltipPosition); //Это уже мой код, тут показывается тултип
                             }
                         }
+                    },function(){
+                       submit.set('disabled',false);
                     });
                 }
                 else {
@@ -348,7 +360,7 @@ dojo.addOnLoad(function() {
 </script>
 </head>
 <body class="claro">
-<div id="appLayout" class="demoLayout" data-dojo-type="dijit.layout.BorderContainer">
+<div data-dojo-type="dijit.layout.BorderContainer">
     <div dojoType="dijit.MenuBar" id="navMenu" region='top'>
         <div dojoType="dijit.MenuBarItem" id='open_form'>
         <span>
