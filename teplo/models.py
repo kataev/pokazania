@@ -21,11 +21,29 @@ class teplo(models.Model):
             else:
                 info[a]=float(info[a])
         return info
+
+    def name(self):
+        return self.date_time
+
     class Meta():
         verbose_name = u"Тепло"
+        verbose_name_plural = u'Тепло'
+        ordering = ('-date',)
+
+    class Admin():
+        list_display = ('date', 'henergy', 'hot_water', 'rpr','robr','tpr','tobr')
+
+    def __unicode__(self):
+        return u'%s от %s' % (self._meta.verbose_name,str(self.date))
 
 
 
 class teploForm(ModelForm):
+    @property
+    def verbose_name(self):
+        return self._meta.model._meta.verbose_name
+
     class Meta:
         model=teplo
+
+

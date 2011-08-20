@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?><component name="dataSourceStorage">
+  <data-source source="LOCAL" name="Django default" product="" version="" jdbc-version="" driver-version="" uuid="38a128a5-0612-45ea-a2d7-0eb28a562ec6">
+    <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+    <jdbc-url>jdbc:postgresql:bteam</jdbc-url>
+    <user-name>bteam</user-name>
+    <user-password>dfc8dfdedfcfdfcbdfc7</user-password>
+    <libraries>
+      <library>
+        <url>file://$USER_HOME$/.PyCharm10/config/jdbc-drivers/postgresql-9.0-801.jdbc4.jar</url>
+      </library>
+    </libraries>
+  </data-source>
+</component>

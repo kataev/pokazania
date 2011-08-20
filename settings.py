@@ -11,14 +11,23 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'pokazania',                      # Or path to database file if using sqlite3.
-        'USER': 'pokazania',                      # Not used with sqlite3.
-        'PASSWORD': 'pokazania',                  # Not used with sqlite3.
+        'ENGINE': 'django.db.backends.postgresql_psycopg2', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'bteam',                      # Or path to database file if using sqlite3.
+        'USER': 'bteam',                      # Not used with sqlite3.
+        'PASSWORD': 'bteam',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
+
+DOJANGO_DOJO_PROFILE = "google_uncompressed"
+
+DOJANGO_DOJO_VERSION = '1.6.0'
+
+DOJANGO_DATAGRID_ACCESS = (
+  'energy.energy',
+  'teplo.teplo',
+)
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -69,6 +78,7 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
+    './static',
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -93,17 +103,18 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
-    'django.middleware.common.CommonMiddleware',
+#    'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
 #    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'dojango.middleware.DojoCollector',
 )
 
 ROOT_URLCONF = 'pokazania.urls'
 
 TEMPLATE_DIRS = (
-    '/home/django/pokazania/templates',
+    './templates',
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -118,9 +129,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
+    'dojango',
     'pokazania.energy',
     'pokazania.teplo',
-    'pokazania.main',
 )
 
 # A sample logging configuration. The only tangible logging

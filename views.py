@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.shortcuts import render_to_response
+from django.template import loader, Context, RequestContext
 from cjson import encode as json
 import datetime
 import csv
 from pokazania.teplo.models import *
 from pokazania.energy.models import *
+from dojango.util import dojo_collector
 
 def excel(request):
     response = HttpResponse(mimetype='text/csv')
@@ -63,12 +66,12 @@ def show_last(request,**kwargs):
     return HttpResponse(json(response),mimetype="application/json;charset=utf-8;")
 
 
-def delta(request,**kwargs):
-    response = {'teplo':{'identifier':'id','items':[],'fields':[]},'energy':{'identifier':'id','items':[],'fields':[]}}
-    q = [teplo,energy]
+def delta(request,model):
+    response = {'identifier':'id','items':[]}
 
-    for model in q:
-        query = model.objects.order_by('date').reverse()[:31]
+    if True:
+        a = model.objects.order_by('date').reverse()
+        query = a[:len(a)-1]
         l = len(query)
         fields = model._meta.fields
         for i in range(l-1):
@@ -92,31 +95,38 @@ def delta(request,**kwargs):
                 if f.name in ['date','date_time']:
                     var.update({f.name:str(getattr(cur,f.name))})
                 else:
-                    var.update({f.name:round((getattr(next,f.name)-getattr(cur,f.name))/w,2)})
+                    vaw = round((getattr(next,f.name)-getattr(cur,f.name))/w,2)
+                    if vaw < -1000:
+                        vaw = 0
+                    var.update({f.name:vaw})
             var['identity']=i+1
-            response[model._meta.app_label]['items'].append(var)
-        for f in fields:
-            if f.name in ['date_time','id']:
-                continue
-            if f.name in ['date','date_time']:
-                response[model._meta.app_label]['fields'].append({
-                    'field': f.name,
-                    'name': f.verbose_name,
-                    'width': 'auto'})
-            else:
-                response[model._meta.app_label]['fields'].append({
-                    'field': f.name,
-                    'name': f.verbose_name,
-                    'width': '200px'})
+            response['items'].append(var)
 
     return HttpResponse(json(response),mimetype="application/json")
 
-def main(response):
-    rendered = render_to_string('main.html',{})
-    return HttpResponse(rendered,mimetype="text/html;charset=utf-8")
+def main(request):
+    forms = [energyForm(auto_id=False),teploForm(auto_id=False)]
+    dojo_collector.add_module('dijit.Dialog')
+    dojo_collector.add_module('dijit.layout.StackContainer')
+    dojo_collector.add_module('dijit.form.Form')
+    dojo_collector.add_module('dijit.layout.BorderContainer')
+    dojo_collector.add_module('dijit.layout.TabContainer')
+    dojo_collector.add_module('dijit.MenuBar')
+    dojo_collector.add_module('dijit.MenuBarItem')
+    dojo_collector.add_module('dijit.PopupMenuBarItem')
+    dojo_collector.add_module("dojox.charting.widget.Chart2D")
+    dojo_collector.add_module("dojox.charting.widget.Legend")
+    dojo_collector.add_module("dojox.charting.themes.PlotKit.green")
+    dojo_collector.add_module("dojox.charting.themes.Claro")
+    dojo_collector.add_module("dojox.charting.DataSeries")
+    dojo_collector.add_module("dojox.charting.widget.SelectableLegend")
+    dojo_collector.add_module("dojox.charting.action2d.Tooltip")
+    dojo_collector.add_module("dojo.date.locale")
+#    dojo_collector.add_module("dojo.data.ItemFileReadStore")
+    return render_to_response('main.html', {'forms':forms},context_instance=RequestContext(request))
 
 
-def form(response):
+def form(request):
     rendered = render_to_string('form.html',{'energy_form':energyForm().as_ul(),'teplo_form':teploForm().as_ul()})
     return HttpResponse(rendered,mimetype="text/html;charset=utf-8")
 
