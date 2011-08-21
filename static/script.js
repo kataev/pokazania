@@ -4,30 +4,97 @@ dojo.registerModulePath("pokazania", "/static");
 
 dojo.addOnLoad(function(){
     chart = new dojox.charting.Chart2D('chart', null);
-    chart.addPlot("default",
+    chart.addPlot("elec",
             {
                 type: "StackedAreas",
                 markers: true,
-                areas: true,
+                areas: false,
                 tension: "S"
+                ,fill:false
             });
-//    chart.addPlot("elec", {type: "StackedAreas"});
+    chart.addPlot("water", {type: "StackedAreas",
+                            markers: true,
+                            areas: false
+                            ,tension: "S"
+                            ,fill:false
+                            });
+    chart.addPlot("gaz", {type: "Lines",
+                            markers: true
+//                            ,areas: true
+                            ,vAxis: "other y"
+                            });
+    chart.addAxis("other y", {leftBottom: false,vertical:true,title:'Газ',titleFont: "normal normal normal 12pt Arial"});
+    var tip = new dojox.charting.action2d.Tooltip(chart, "elec");
+    var magnify = new dojox.charting.action2d.Magnify(chart, "elec");
 
-    var tip = new dojox.charting.action2d.Tooltip(chart, "default");
-    var magnify = new dojox.charting.action2d.Magnify(chart, "default");
+    var tip = new dojox.charting.action2d.Tooltip(chart, "water");
+    var magnify = new dojox.charting.action2d.Magnify(chart, "water");
+
+    var tip = new dojox.charting.action2d.Tooltip(chart, "gaz");
+    var magnify = new dojox.charting.action2d.Magnify(chart, "gaz");
+    
     chart.setTheme(dojox.charting.themes.Claro);
-    chart.addAxis("y", {vertical: true });
-    selectableLegend = false;
+    chart.addAxis("y", {vertical: true});
+    var selectableLegend = false;
 
 
 
 dojo.declare('dojox.grid.DataGrid',dojox.grid.DataGrid,{
     constructor:function(){
         grid = this;
-        console.log(this);
+//        console.log(this);
         dojo.connect(this,'onRowClick',function(event){
             console.log(event);
         });
+    },
+    chartRender:function(){
+        var grid = this;
+        var j = 0;
+                    var a = new dojox.charting.DataSeries(
+                                    grid.store, {query: {id: "*"}
+                                            }, function(store, item) {
+                                        return {text:store.getValue(item, 'date'),
+                                                value:j++}
+                                    })
+                    dojo.connect(a, "_onFetchComplete",function(asda){
+                        chart.addAxis("x",{labels:a.data});
+//                console.log('render',asda)
+                        chart.render();
+                    });
+//            console.log('labels',a)
+
+                chart.addSeries(grid.store.url,
+                            new dojox.charting.DataSeries(
+                                    grid.store, {query: {id: "*"}
+                                            }, function(store, item) {
+                                        return store.getValue(item, 'elec4') < 100 ? parseInt(store.getValue(item, 'elec4')) : 0
+                                    }),{plot:'elec',color:'yellow' });
+                chart.addSeries(grid.store.url+1,
+                            new dojox.charting.DataSeries(
+                                    grid.store, {query: {id: "*"}
+                                            }, function(store, item) {
+                                        return store.getValue(item, 'elec16') < 100 ? parseInt(store.getValue(item, 'elec16')) : 0
+                                    }),{plot:'elec',color:'orange' });
+                chart.addSeries(grid.store.url+2,
+                            new dojox.charting.DataSeries(
+                                    grid.store, {query: {id: "*"}
+                                            }, function(store, item) {
+                                        return store.getValue(item, 'iwater') < 100 ? parseInt(store.getValue(item, 'iwater')) : 0
+                                    }),{plot:'water',color:'#67CDDC' });
+                chart.addSeries(grid.store.url+3,
+                            new dojox.charting.DataSeries(
+                                    grid.store, {query: {id: "*"}
+                                            }, function(store, item) {
+                                        return store.getValue(item, 'uwater') < 100 ? parseInt(store.getValue(item, 'uwater')) : 0
+                                    }),{ plot:'water',color:'#00A9E0' });
+                chart.addSeries(grid.store.url+'gaz',
+                            new dojox.charting.DataSeries(
+                                    grid.store, {query: {id: "*"}
+                                            }, function(store, item) {
+                                        return store.getValue(item, 'gaz') < 9000 ? parseInt(store.getValue(item, 'gaz')) : 0
+                                    }),{ plot:'gaz',color:'#98C73D' });
+                chart.render();
+
     },
     postCreate: function(){
 			this._placeholders = [];
@@ -42,31 +109,11 @@ dojo.declare('dojox.grid.DataGrid',dojox.grid.DataGrid,{
 				// default value for aria-readonly is false, set to true if grid is not editable
 				dojo.attr(this.domNode,"aria-readonly", "true");
 			}
-        console.log('postCreate')
+//        console.log('postCreate')
         var grid = this;
 
         if (grid.store.url.split('/')[2]=='energy'){
-
-        chart.addAxis("x");
-        var i=0;
-
-        grid.store.fetch()
-
-        var s = chart.addSeries(grid.store.url,
-                    new dojox.charting.DataSeries(
-                            grid.store, {query: {id: "*"}
-                                    }, function(store, item) {
-                                return store.getValue(item, 'elec4') < 100 ? parseInt(store.getValue(item, 'elec4')) : 0
-                            }),{ stroke: "red", fill: "pink" });
-        var j=0;
-        var d = chart.addSeries(grid.store.url+1,
-                    new dojox.charting.DataSeries(
-                            grid.store, {query: {id: "*"}
-                                    }, function(store, item) {
-                                return store.getValue(item, 'elec16') < 100 ? parseInt(store.getValue(item, 'elec16')) : 0
-                            }),{ stroke: "green", fill: "lightgreen" });
-            console.log(chart, s)
-            chart.render();
+            this.chartRender();
         }
 		}
 });
