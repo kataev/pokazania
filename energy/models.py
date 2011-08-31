@@ -37,6 +37,33 @@ class energy(models.Model):
     class Admin:
         list_display = ('date','elec4','elec16','iwater','uwater','gaz')
 
+
+class DayManager(models.Manager):
+    def all(self,**kwargs):
+        query = super(DayManager, self).all(**kwargs)
+#        l = len(query)
+        for q in query:
+            try:
+                next = q.get_previous_by_date()
+                for field in q._meta.fields:
+                    if field.name not in ['id','date','date_time']:
+                        delta  = int((next.date - q.date).days)
+#                        cur = getattr(q,field.name)
+                        
+                        setattr(q,field.name,round((getattr(next,field.name)-getattr(q,field.name))/delta,2))
+            except q.DoesNotExist:
+                pass
+        return query
+        
+
+class energyDay(energy):
+    class Meta:
+        proxy = True
+    objects = DayManager()
+
+    
+
+
 class energyForm(ModelForm):
     @property
     def verbose_name(self):

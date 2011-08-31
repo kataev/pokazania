@@ -2,7 +2,7 @@
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.shortcuts import render_to_response
-from django.template import loader, Context, RequestContext
+from django.template import RequestContext
 from cjson import encode as json
 import datetime
 import csv
@@ -70,6 +70,7 @@ def delta(request,model):
     response = {'identifier':'id','items':[]}
 
     if True:
+
         a = model.objects.order_by('date').reverse()
         query = a[:len(a)-1]
         l = len(query)
@@ -109,6 +110,7 @@ def main(request):
     dojo_collector.add_module('dijit.Dialog')
     dojo_collector.add_module('dijit.layout.StackContainer')
     dojo_collector.add_module('dijit.form.Form')
+    dojo_collector.add_module('dijit.form.HorizontalSlider')
     dojo_collector.add_module('dijit.layout.BorderContainer')
     dojo_collector.add_module('dijit.layout.TabContainer')
     dojo_collector.add_module('dijit.MenuBar')

@@ -26,6 +26,7 @@ DOJANGO_DOJO_VERSION = '1.6.0'
 
 DOJANGO_DATAGRID_ACCESS = (
   'energy.energy',
+  'energy.energyDay',
   'teplo.teplo',
 )
 

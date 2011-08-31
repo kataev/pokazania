@@ -14,27 +14,27 @@
             locale: 'Ru-ru',
             'parseOnLoad':true
         };
-
     </script>
 {% endblock %}
 {% block dojango_content %}
     <div data-dojo-type="dijit.Dialog" id='dialog' title='Новые показания'>
-        <div dojoType="dijit.layout.StackContainer" style='height:600px; width:400px;overflow: auto;' class='form'>
+        <div dojoType="dijit.layout.StackContainer" style='height:300px; width:400px;' class='form'>
             {% for form in forms %}
-                <div dojoType="dijit.layout.ContentPane">
+                <div dojoType="dijit.layout.ContentPane" title="{{ form.verbose_name }}">
                     <h3>{{ form.verbose_name }}</h3>
                     <form action="./form/" method="POST" dojotype='dijit.form.Form'>
                         {% for field in form %}
                             <div>
-                                <span>{{ field.label }}</span>{{ field }}
+                                <span class='label'>{{ field.label }}</span>{{ field }}
                             </div>
                         {% endfor %}
+                        <input type="submit" label="Отправить" dojotype="dijit.form.Button"
+                               onClick="dijit.byNode(this.domNode.parentNode).validate()">
                     </form>
                 </div>
             {% endfor %}
         </div>
     </div>
-
     <div data-dojo-type="dijit.layout.BorderContainer">
         <div dojoType="dijit.MenuBar" id="navMenu" region='top'>
             <div dojoType="dijit.MenuBarItem" onclick="dijit.byId('dialog').show()">
@@ -42,20 +42,20 @@
             <b>Добавить показания</b>
         </span>
             </div>
-            <div dojoType="dijit.PopupMenuBarItem">
-        <span>
-            Вид
-        </span>
-
-                <div dojoType="dijit.Menu" id="fileMenu">
-                    <div dojoType="dijit.MenuItem" id="delta" class='view'>
-                        Расход в день
-                    </div>
-                    <div dojoType="dijit.MenuItem" id="last" class='view'>
-                        Абсолютные значения
-                    </div>
-                </div>
-            </div>
+            {#            <div dojoType="dijit.PopupMenuBarItem">#}
+            {#        <span>#}
+            {#            Вид#}
+            {#        </span>#}
+            {##}
+            {#                <div dojoType="dijit.Menu" id="fileMenu">#}
+            {#                    <div dojoType="dijit.MenuItem" id="delta" class='view'>#}
+            {#                        Расход в день#}
+            {#                    </div>#}
+            {#                    <div dojoType="dijit.MenuItem" id="last" class='view'>#}
+            {#                        Абсолютные значения#}
+            {#                    </div>#}
+            {#                </div>#}
+            {#            </div>#}
             <div dojoType="dijit.MenuBarItem" onclick="window.location='excel/'">
         <span>
             <a href='excel/'>Excel</a>
@@ -67,27 +67,25 @@
         </span>
             </div>
         </div>
-{#    <div dojoType="dijit.layout.ContentPane"  region="top"#}
-{#             style="height:50px; padding:0px; margin:0px;">#}
-{#        <div id='selectableLegend'></div>#}
-{##}
-{#        </div>#}
-        <div dojoType="dijit.layout.ContentPane" id='chart' region="top"
+        <div dojoType="dijit.layout.ContentPane" region="top"
              style="height:330px; padding:0px; margin:0px;">
-
+            <div id='chart'></div>
+            <div dojoType="dijit.form.HorizontalSlider" value="0"
+                 minimum="0" maximum="100" id='slider'
+                 showButtons="false" style="width:100%;"></div>
         </div>
         <div dojoType="dijit.layout.ContentPane" region="leading" style="width:45%;">
-                {% datagrid energy energy %}
-                    json_store_url='/delta/energy/'
-                    list_display = ('date','elec4','elec16','iwater','uwater','gaz')
-                {% enddatagrid %}
+            {% datagrid energy energyDay %}
+{#                json_store_url='/delta/energy/'#}
+                list_display = ('date','elec4','elec16','iwater','uwater','gaz')
+            {% enddatagrid %}
         </div>
         <div dojoType="dijit.layout.ContentPane" region="center">
-                {% datagrid teplo teplo %}
-                    json_store_url='/delta/teplo/'
-                    list_display = ('date', 'henergy', 'hot_water', 'rpr','robr','tpr','tobr')
-                {% enddatagrid %}
+            {% datagrid teplo teplo %}
+                json_store_url='/delta/teplo/'
+                list_display = ('date', 'henergy', 'hot_water', 'rpr','robr','tpr','tobr')
+            {% enddatagrid %}
         </div>
-
+    </div>
     </div>
 {% endblock %}

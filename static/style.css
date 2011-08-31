@@ -40,7 +40,7 @@
         width: 100px;
     }
 
-    label {
+    span.label {
         width: 120px;
         float: left;
         text-align: right;
