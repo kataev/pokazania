@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Показания счётчиков</title>
+    <link href="/static/style.css" rel="stylesheet">
+    <script src="/static/underscore-1.2.2.js"></script>
+    <script src="/static/jquery-1.6.4.js"></script>
+    <script src="/static/highcharts.js"></script>
+    <script src="/static/json2.js"></script>
+    <script src="/static/backbone.js"></script>
+    <script type="text/javascript">
+        energy_preload = {{ energy|safe }}
+        {#        teplo_preload = {{ teplo }}#}
+    </script>
+    <script type="text/template" id="energy_template">
+{#        <table>#}
+            <thead>
+            <tr><th><%= date %></th></tr>
+            </thead>
+            <tbody>
+            <tr><td><%= elec4 %></td></tr>
+            <tr><td><%= elec16 %></td></tr>
+            <tr><td><%= iwater %></td></tr>
+            <tr><td><%= uwater %></td></tr>
+            <tr><td><%= gaz %></td></tr>
+            </tbody>
+{#        </table>#}
+    </script>
+    <script src="/static/script.js"></script>
+</head>
+<body>
+<table>
+    <tr><th>Дата</th></tr>
+    <tr><th>Elec4</th></tr>
+    <tr><th>Elec16</th></tr>
+    <tr><th>Iwater</th></tr>
+    <tr><th>Uwater</th></tr>
+    <tr><th>Gaz</th></tr>
+</table>
+<div id='conteiner'>
+<div id="tables"></div>
+</div>
+</body>
+</html>
